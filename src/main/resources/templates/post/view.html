@@ -6,39 +6,56 @@
 </head>
 <nav data-th-replace="~{fragments/navBar :: navBarFragment}"></nav>
 <body>
-<div class="container mt-4">
-    <!-- Blog Post -->
-    <div class="post">
-        <h1>Post Title</h1>
-        <p>Post Content</p>
-        <div class="reaction-buttons">
-            <button class="btn btn-light"><i class="far fa-thumbs-up"></i> Like</button>
-            <button class="btn btn-light"><i class="far fa-thumbs-down"></i> Dislike</button>
-        </div>
-    </div>
-
-    <!-- Comments Section -->
-    <div class="comments mt-4">
-        <h2>Comments</h2>
-        <div id="comments-container">
-            <!-- Dynamically loaded comments -->
-
-        </div>
-
-        <!-- Comment Form -->
-        <div class="mt-4">
-            <h3>Add a Comment</h3>
-            <form id="comment-form" method="post" action="/add-comment">
-                <div class="mb-3">
-                    <textarea class="form-control" name="content" rows="3"
-                              placeholder="Write your comment..."></textarea>
+<div class="row">
+    <div class="col-1"></div>
+    <div class="col-10">
+        <div class="container-fluid mt-4">
+            <!-- Blog Post -->
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title text-center fw-bold shadow" id="post_title"></h4>
+                    <h6 class="card-subtitle mb-2 text-muted" id="post_owner">Card subtitle</h6>
+                    <div class="container" id="post_content"></div>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
+                <div class="row">
+                    <div class="container d-flex justify-content-end">
+                        <div class="btn-group col-sm-8" role="group" aria-label="Reaction button group">
+                            <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-primary"
+                                    onclick="submitReaction('LIKE')">
+                                <i class="fas fa-thumbs-up"></i> Like
+                            </button>
+                            <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-secondary"
+                                    onclick="submitReaction('DIS_LIKE')">
+                                <i class="fas fa-thumbs-down"></i> Dislike
+                            </button>
+                            <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-success"
+                                    onclick="submitReaction('CELEBRATE')">
+                                <i class="fas fa-star"></i> Celebrate
+                            </button>
+                            <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-warning"
+                                    onclick="submitReaction('SUPPORTIVE')">
+                                <i class="fas fa-hands-helping"></i> Supportive
+                            </button>
+                            <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-danger"
+                                    onclick="submitReaction('LOVE')">
+                                <i class="fas fa-heart"></i> Love
+                            </button>
+                            <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-info"
+                                    onclick="submitReaction('INSIGHTFUL')">
+                                <i class="fas fa-lightbulb"></i> Insightful
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--    comment -->
+            <div class="row">
+
+            </div>
         </div>
     </div>
+    <div class="col-1"></div>
 </div>
-
 
 <input type="hidden" data-th-value="${postDetailUrl}" id="postDetailUrl">
 

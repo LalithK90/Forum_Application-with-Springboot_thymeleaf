@@ -90,16 +90,29 @@ $(document).ready(function () {
 })
 
 function getData(val) {
+    let postTitle = $("#post_title");
+    let postOwner = $("#post_owner");
+    let postContent = $("#post_content");
+
     let postDetailUrl = $("#postDetailUrl").val();
     console.log(val + " " + postDetailUrl)
     $.ajax({
         url: `${postDetailUrl}${val}`,
         method: 'GET',
         success: function (data) {
+            postTitle.html(data.title)
+            postOwner.val('Lalith')
+            postContent.html(data.content)
             console.log(data)
+
         },
         error: function (error) {
             console.error("Error fetching posts", error);
         }
     });
+}
+
+function submitReaction(reaction) {
+    console.log("User selected reaction: " + reaction);
+    // Implement the logic to handle the user's reaction here
 }

@@ -1,6 +1,5 @@
 package cyou.forum.entity;
 
-import cyou.forum.audit.AuditEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

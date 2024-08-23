@@ -1,6 +1,6 @@
 package cyou.forum.entity;
 
-import cyou.forum.audit.AuditEntity;
+import cyou.audit.AuditEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -35,7 +35,7 @@ public class Post extends AuditEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, fetch = FetchType.EAGER)
     @JoinTable(
             name = "post_post_tag",
             joinColumns = @JoinColumn(name = "post_id"),
@@ -45,8 +45,6 @@ public class Post extends AuditEntity {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReactionPost> reactionPosts = new ArrayList<>();
-
-
 
 
 }

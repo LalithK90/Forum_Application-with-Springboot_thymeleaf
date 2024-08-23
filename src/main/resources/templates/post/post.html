@@ -12,6 +12,10 @@
         background-color: #9dec83;
     }
 
+    .pro_image {
+        width: 80%;
+    }
+
 </style>
 
 <div class="container mt-5">
@@ -73,7 +77,7 @@
 
 <!-- The Modal -->
 <div class="modal fade" id="myModal">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
 
             <!-- Modal Header -->
@@ -111,6 +115,7 @@
                 url: `/forum/api/posts?page=${page}&size=${postsPerPage}&sortOrder=${sortOrder}`,
                 method: 'GET',
                 success: function (data) {
+                    console.log(data)
                     renderPosts(data.posts);
                     renderPagination(data.totalPages, page);
                 },
@@ -126,7 +131,7 @@
             posts.forEach(post => {
                 let html = `<div type="button" class="row singlePost rounded shadow" data-bs-toggle="modal" data-bs-target="#myModal">
                               <div class="col-sm-10 modal_open" onclick="getData('${post.number}')" >
-                               <h4 class="fw-bold text-left">${post.title}</h4>
+                               <h4 class="fw-bold text-left text-wrap col-12">${post.title}</h4>
                                  <div class="row">
                                   <div class="col-sm-8">
                                     <span class="badge bg-success mx-2">  View Count: ${post.viewCount}</span>
@@ -139,19 +144,25 @@
                                    </div>
                                  </div>
                                </div>
-                              <div class="col-sm-1">
-                                <img alt="profile image" class="rounded-pill shadow" src="${post.profileUrl}">
+                              <div class="col-sm-1 p-2">
+                                <img alt="profile image" class="rounded-pill shadow pro_image" src="${post.profileUrl}">
                               </div>
-                              <div class="col-sm-1 pt-3">
-                               <a href="/forum/post/edit/${post.number}">
-                                 <button class="btn btn-outline-primary ${post.editable ? '' : 'disabled'}">
-                                  <i class="fas fa-edit"></i> Edit
-                                 </button>
-                               </a>
-                             </div>
+                              ${editableButton(post.editable, post.number)}
                             </div>`;
                 postContainerBody.append(html)
             });
+        }
+
+        function editableButton(editable, number) {
+            if (editable) {
+                return `<div class="col-sm-1 pt-3">
+              <a href="/forum/post/edit/${number}">
+                <button class="btn btn-outline-primary"><i class="fas fa-edit"></i></button>
+              </a>
+            </div>`;
+            }else {
+                return ``;
+            }
         }
 
         function renderPagination(totalPages, currentPage) {

@@ -1,4 +1,4 @@
-package cyou.forum;
+package cyou;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +13,6 @@ public class MainController {
 
     @GetMapping("/home")
     public String home() {
-        return "home";
+        return "redirect:/forum";
     }
 }

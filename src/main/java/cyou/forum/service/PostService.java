@@ -1,12 +1,14 @@
 package cyou.forum.service;
 
-import cyou.forum.CommonService;
+import cyou.CommonService;
 import cyou.forum.dao.PostDao;
 import cyou.forum.entity.Post;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
 
 @Service
 @AllArgsConstructor
@@ -39,6 +41,11 @@ public class PostService {
         if (number == null) {
             return false;
         } else {
+            var postTags = post.getPostTags();
+            if (postTags != null) {
+                post.setPostTags(new HashSet<>());
+                postDao.save(post);
+            }
             postDao.delete(post);
             return true;
         }

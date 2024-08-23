@@ -1,5 +1,6 @@
 package cyou.forum.controller;
 
+import cyou.forum.dto.PostDeleteDto;
 import cyou.forum.dto.PostDto;
 import cyou.forum.dto.PostViewDto;
 import cyou.forum.entity.Post;
@@ -40,9 +41,7 @@ public class ForumController {
 
     @GetMapping
     public String postPage(Model model) {
-        model.addAttribute("postDetailUrl", MvcUriComponentsBuilder
-                .fromMethodName(ForumController.class, "getPostView", "")
-                .toUriString());
+        model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
         return "post/post";
     }
 
@@ -105,6 +104,7 @@ public class ForumController {
 
     @GetMapping("/post/edit/{number}")
     public String editPostPage(@PathVariable("number") String number, Model model) {
+        model.addAttribute("postDUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "deletePost", "").toUriString());
         return commonForPost(model, postService.findByNumber(number));
     }
 
@@ -119,9 +119,10 @@ public class ForumController {
 
     @GetMapping("/delete/{number}")
     @ResponseBody
-    public ResponseEntity<Boolean> deletePost(@PathVariable("number") String number) {
+    public ResponseEntity<PostDeleteDto> deletePost(@PathVariable("number") String number) {
         var status = postService.deleteByNumber(number);
-        return new ResponseEntity<>(status, HttpStatus.OK);
+        var redirectUrl = status ? MvcUriComponentsBuilder.fromMethodName(ForumController.class, "postPage", "").toUriString() : "";
+        return new ResponseEntity<>(new PostDeleteDto(status, redirectUrl), HttpStatus.OK);
     }
 
     //    dummy method for view

@@ -1,4 +1,4 @@
-package cyou.forum.audit;
+package cyou.audit;
 
 
 import org.springframework.context.annotation.Bean;

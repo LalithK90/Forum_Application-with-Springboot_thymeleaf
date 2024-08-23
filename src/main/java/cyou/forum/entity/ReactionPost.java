@@ -1,6 +1,6 @@
 package cyou.forum.entity;
 
-import cyou.forum.audit.AuditEntity;
+import cyou.audit.AuditEntity;
 import cyou.forum.entity.enums.Reaction;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

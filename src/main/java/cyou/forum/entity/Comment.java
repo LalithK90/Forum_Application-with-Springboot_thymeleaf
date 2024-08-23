@@ -1,6 +1,6 @@
 package cyou.forum.entity;
 
-import cyou.forum.audit.AuditEntity;
+import cyou.audit.AuditEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

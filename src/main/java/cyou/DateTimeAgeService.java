@@ -1,4 +1,4 @@
-package cyou.forum;
+package cyou;
 
 import org.springframework.stereotype.Service;
 

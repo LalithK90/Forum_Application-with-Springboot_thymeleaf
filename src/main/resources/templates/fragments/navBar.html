@@ -1,23 +1,23 @@
 <div data-th-fragment="navBarFragment">
-  <div data-th-replace="~{fragments/header :: headerFragment}"></div>
+    <div data-th-replace="~{fragments/header :: headerFragment}"></div>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Forum</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/home">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/forum">Posts</a>
+                        <a class="nav-link active" aria-current="page" href="/home"><i class="fas fa-comments"></i></a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Post Related</a>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Post
+                            Related</a>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/forum">Posts</a></li>
                             <li><a class="dropdown-item" href="/forum/post/add">Add Post</a></li>
                             <li><a class="dropdown-item" href="#">Another link</a></li>
                             <li><a class="dropdown-item" href="#">A third link</a></li>

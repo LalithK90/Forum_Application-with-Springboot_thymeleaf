@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<nav data-th-replace="~{fragments/navBar :: navBarFragment}"></nav>
+<style>
+    .singlePost:hover {
+        background-color: #9dec83;
+    }
+
+</style>
+
+<div class="container mt-5">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="postForPage" class="col-form-label">Post for:</label>
+                </div>
+                <div class="col-auto">
+                    <select id="postForPage" class="form-control">
+                        <option selected value="20">20</option>
+                        <option value="40">40</option>
+                        <option value="60">60</option>
+                        <option value="80">80</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="sortOrder" class="col-form-label">Sort By:</label>
+                </div>
+                <div class="col-auto">
+                    <select id="sortOrder" class="form-control">
+                        <option value="latest">Latest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="viewMostCount">Most View</option>
+                        <option value="viewLessCount">Less View</option>
+                        <option value="reactionMostCount">Most Reactions</option>
+                        <option value="reactionLessCount">Less Reactions</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3  align-items-center">
+            <div class="row g-3 align-items-center">
+                <a href="/forum/post/add" type="button" class="btn btn-sm btn-outline-info text-dark-emphasis">
+                    <i class="fas fa-plus"></i> New Post
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="container" id="postDisplay">
+        </div>
+    </div>
+
+    <div class="pagination-container mt-3">
+        <nav>
+            <ul class="pagination justify-content-end">
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- The Modal -->
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title"><span id="modelHeader"></span></h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                <div class="text-center" id="modelContainer">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <!--                    todo need to manage how view post and comment on here-->
+                </div>
+
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<input type="hidden" data-th-value="${postDetailUrl}" id="postDetailUrl">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        let currentPage = 1;
+        let postsPerPage = $("#postForPage").val();
+
+        function fetchPosts(page, sortOrder) {
+            $.ajax({
+                url: `/forum/api/posts?page=${page}&size=${postsPerPage}&sortOrder=${sortOrder}`,
+                method: 'GET',
+                success: function (data) {
+                    renderPosts(data.posts);
+                    renderPagination(data.totalPages, page);
+                },
+                error: function (error) {
+                    console.error("Error fetching posts", error);
+                }
+            });
+        }
+
+        function renderPosts(posts) {
+            let postContainerBody = $('#postDisplay');
+            postContainerBody.empty();
+            posts.forEach(post => {
+                let html = `<div type="button" class="row singlePost rounded shadow" data-bs-toggle="modal" data-bs-target="#myModal">
+                              <div class="col-sm-10 modal_open" onclick="getData('${post.number}')" >
+                               <h4 class="fw-bold text-left">${post.title}</h4>
+                                 <div class="row">
+                                  <div class="col-sm-8">
+                                    <span class="badge bg-success mx-2">  View Count: ${post.viewCount}</span>
+                                    <span class="badge bg-info mx-5"> React Count: ${post.reactCount}</span>
+                                    <span class="h1 badge bg-danger bg-opacity-50 mx-5 p-2">Click Here to See the Post</span>
+                                  </div>
+                                  <div class="col-sm-4">
+                                    <span class="badge rounded-pill bg-secondary">   ${post.createdBy}</span>
+                                    <span class="badge rounded-pill bg-warning"> at ${post.createdAt}</span>
+                                   </div>
+                                 </div>
+                               </div>
+                              <div class="col-sm-1">
+                                <img alt="profile image" class="rounded-pill shadow" src="${post.profileUrl}">
+                              </div>
+                              <div class="col-sm-1 pt-3">
+                               <a href="/forum/post/edit/${post.number}">
+                                 <button class="btn btn-outline-primary ${post.editable ? '' : 'disabled'}">
+                                  <i class="fas fa-edit"></i> Edit
+                                 </button>
+                               </a>
+                             </div>
+                            </div>`;
+                postContainerBody.append(html)
+            });
+        }
+
+        function renderPagination(totalPages, currentPage) {
+            let paginationContainer = $('.pagination');
+            paginationContainer.empty();
+
+            for (let i = 1; i <= totalPages; i++) {
+                paginationContainer.append(`
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#">${i}</a>
+                    </li>
+                `);
+            }
+
+            $('.page-link').click(function (e) {
+                e.preventDefault();
+                const page = parseInt($(this).text());
+                fetchPosts(page, $('#sortOrder').val());
+            });
+        }
+
+        $('#sortOrder').change(function () {
+            fetchPosts(currentPage, $(this).val());
+        });
+
+        fetchPosts(currentPage, 'latest');
+    });
+
+    function getData(val) {
+        let postDetailUrl = $("#postDetailUrl").val();
+        console.log(val + " " + postDetailUrl)
+        $.ajax({
+            url: `${postDetailUrl}${val}`,
+            method: 'GET',
+            success: function (data) {
+                console.log(data)
+            },
+            error: function (error) {
+                console.error("Error fetching posts", error);
+            }
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create/Edit Post</title>
+</head>
+<body>
+<link rel="stylesheet" href="/css/snapselect.min.css">
+<div data-th-replace="~{fragments/trumbowygStyle :: trumbowygStyleFragment}"></div>
+<div data-th-replace="~{fragments/trumbowygScript :: trumbowygScriptFragment}"></div>
+<nav data-th-replace="~{fragments/navBar :: navBarFragment}"></nav>
+<div class="row">
+    <div class="col-1"></div>
+    <div class="col-10">
+        <div class="container mt-2 card rounded shadow">
+            <div class="card-title mt-2 text-center">
+                    <span class="h3 text-body-tertiary bg-white font-monospace shadow rounded px-4"
+                          data-th-text="${post.id == null?'Create A New Post':'Edit Post'}"></span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6 text-center">
+                        <a data-th-if="${post.id != null && post.createdBy.equals(#authentication.name)}"
+                           id="btnPostDelete" type="button" class="btn btn-outline-danger">
+                            <i class="fas fa-trash-alt"></i> Delete Post</a>
+                    </div>
+                    <div class="col-sm-6 text-center">
+                        <a href="/forum" class="btn btn-outline-info">
+                            <i class="fas fa-list"></i> All Posts
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <form data-th-action="@{/forum/post}" data-th-object="${post}" method="post" class="was-validated">
+                        <input type="hidden" data-th-if="${post.id == null}" data-th-field="*{id}">
+                        <div class="row">
+                            <div class="container-fluid">
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <label for="title">Title</label>
+                                    </div>
+                                    <div class="col-auto">
+                                        <input type="text" id="title" data-th-field="*{title}"
+                                               class="form-control col-12"
+                                               required/>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="valid-feedback">
+                                            Looks good!
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <label for="content">Content</label>
+                                    <textarea id="content" data-th-field="*{content}" class="form-control"
+                                              required></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <label for="demo">Tags</label>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select multiple id="demo" data-th-field="*{postTags}" class="form-control"
+                                                required>
+                                            <option data-th-each="postTag :${postTags}"
+                                                    data-th-value="${postTag.id}"
+                                                    data-th-text="${postTag.tag}">Volvo
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="container text-center">
+                                        <a href="/forum" class="btn btn-outline-secondary mx-2">Cancel</a>
+                                        <button type="submit" class="btn btn-outline-primary">Save</button>
+                                    </div>
+                                </div>
+                                <!--errors display-->
+                                <div data-th-replace="~{fragments/errorShowFragment :: errorShowFragment}"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-1"></div>
+</div>
+
+<script defer src="/js/snapselect.min.js"></script>
+<script defer src="/js/addPost.js"></script>
+</body>
+</html>

@@ -141,6 +141,8 @@ public class ForumController {
     @ResponseBody
     public ResponseEntity<PostViewDto> getPostView(@PathVariable("number") String number) {
         Post post = postService.findByNumber(number);
+        post.setViewCount(post.getViewCount() + 1);
+        post = postService.persist(post);
 
         var postViewDto = new PostViewDto();
         postViewDto.setNumber(post.getNumber());

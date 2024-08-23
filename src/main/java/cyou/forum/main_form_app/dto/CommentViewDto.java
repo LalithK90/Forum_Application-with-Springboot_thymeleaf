@@ -10,8 +10,8 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostViewDto {
-    private String title, number, content, postOwner;
-    private int postViewCount;
-    private Map<Reaction, Long> postReactions;
+public class CommentViewDto {
+    private String content;
+    private long post, parentComment;
+    private Map<Reaction, Long> commentReactions;
 }

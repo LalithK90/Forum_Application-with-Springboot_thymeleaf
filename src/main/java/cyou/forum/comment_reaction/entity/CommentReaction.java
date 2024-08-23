@@ -1,8 +1,8 @@
-package cyou.forum.post_comment_reaction.entity;
+package cyou.forum.comment_reaction.entity;
 
 import cyou.audit.AuditEntity;
+import cyou.enums.Reaction;
 import cyou.forum.comment.entity.Comment;
-import cyou.forum.post_comment_reaction.entity.enums.Reaction;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,7 +17,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReactionComment extends AuditEntity {
+public class CommentReaction extends AuditEntity {
 
     @Enumerated(EnumType.STRING)
     private Reaction reaction;

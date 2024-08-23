@@ -1,4 +1,4 @@
-package cyou.forum.post_comment_reaction.entity.enums;
+package cyou.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

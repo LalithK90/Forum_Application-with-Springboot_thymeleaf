@@ -84,7 +84,7 @@ $(document).ready(function () {
     fetchPosts(currentPage, 'latest');
 });
 */
-
+let number;
 $(document).ready(function () {
     getData('DoL338YSF9');
 })
@@ -93,18 +93,34 @@ function getData(val) {
     let postTitle = $("#post_title");
     let postOwner = $("#post_owner");
     let postContent = $("#post_content");
+    let postViewCount = $("#postViewCount");
+
 
     let postDetailUrl = $("#postDetailUrl").val();
-    console.log(val + " " + postDetailUrl)
     $.ajax({
         url: `${postDetailUrl}${val}`,
         method: 'GET',
         success: function (data) {
-            postTitle.html(data.title)
-            postOwner.val('Lalith')
-            postContent.html(data.content)
-            console.log(data)
+            postTitle.html(data.title);
+            postOwner.html(data.postOwner);
+            postViewCount.html(data.postViewCount);
+            postContent.html(data.content);
+            number = data.number;
+            getReaction();
+        },
+        error: function (error) {
+            console.error("Error fetching posts", error);
+        }
+    });
+}
 
+function getReaction() {
+    let getPostReactionUrl = $("#getPostReactionUrl").val() + number;
+    $.ajax({
+        url: getPostReactionUrl,
+        method: 'GET',
+        success: function (data) {
+            setReactionCount(data)
         },
         error: function (error) {
             console.error("Error fetching posts", error);
@@ -113,6 +129,25 @@ function getData(val) {
 }
 
 function submitReaction(reaction) {
-    console.log("User selected reaction: " + reaction);
-    // Implement the logic to handle the user's reaction here
+    let persistPostReactionUrl = $("#persistPostReactionUrl").val() + number + "/" + reaction;
+    $.ajax({
+        url: persistPostReactionUrl,
+        method: 'GET',
+        success: function (data) {
+            setReactionCount(data)
+        },
+        error: function (error) {
+            console.error("Error fetching posts", error);
+        }
+    });
 }
+
+function setReactionCount(data) {
+    $("#likeCount").html(data.LIKE);
+    $("#dislikeCount").html(data.DIS_LIKE);
+    $("#celebrateCount").html(data.CELEBRATE);
+    $("#supportCount").html(data.SUPPORT);
+    $("#loveCount").html(data.LOVE);
+    $("#insightfulCount").html(data.INSIGHTFUL);
+}
+

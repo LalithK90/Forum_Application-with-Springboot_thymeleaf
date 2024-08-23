@@ -1,8 +1,8 @@
 package cyou.forum.comment.entity;
 
 import cyou.audit.AuditEntity;
+import cyou.forum.comment_reaction.entity.CommentReaction;
 import cyou.forum.post.entity.Post;
-import cyou.forum.post_comment_reaction.entity.ReactionComment;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -34,7 +34,7 @@ public class Comment extends AuditEntity {
     private List<Comment> replies = new ArrayList<>();
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReactionComment> reactionComments = new ArrayList<>();
+    private List<CommentReaction> reactionComments = new ArrayList<>();
 
 
 }

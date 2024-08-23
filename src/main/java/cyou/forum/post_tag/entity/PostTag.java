@@ -22,6 +22,9 @@ public class PostTag {
 
     private String tag;
 
+    @Column(unique = true)
+    private String adCode;
+
     @ManyToMany(mappedBy = "postTags")
     private Set<Post> posts = new HashSet<>();
 

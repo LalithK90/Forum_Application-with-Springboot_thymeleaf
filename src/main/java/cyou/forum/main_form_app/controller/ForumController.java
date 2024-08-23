@@ -1,13 +1,15 @@
 package cyou.forum.main_form_app.controller;
 
+import cyou.enums.Reaction;
 import cyou.forum.comment.service.CommentService;
 import cyou.forum.main_form_app.dto.PostDeleteDto;
 import cyou.forum.main_form_app.dto.PostDto;
 import cyou.forum.main_form_app.dto.PostViewDto;
 import cyou.forum.post.entity.Post;
-import cyou.forum.post_comment_reaction.service.ReactionPostOrCommentService;
-import cyou.forum.post_tag.service.PostTagService;
 import cyou.forum.post.service.PostService;
+import cyou.forum.post_reaction.entity.PostReaction;
+import cyou.forum.post_reaction.service.PostReactionService;
+import cyou.forum.post_tag.service.PostTagService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,10 +26,8 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @AllArgsConstructor
@@ -37,11 +37,13 @@ public class ForumController {
     private final PostService postService;
     private final PostTagService postTagService;
     private final CommentService commentService;
-    private final ReactionPostOrCommentService reactionPostOrCommentService;
+    private final PostReactionService postReactionService;
 
     @GetMapping
     public String postPage(Model model) {
         model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
+        model.addAttribute("persistPostReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistPostReaction", "", "").toUriString()));
+        model.addAttribute("getPostReactionUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostReaction", "").toUriString());
         return "post/post";
     }
 
@@ -80,7 +82,7 @@ public class ForumController {
         postDto.setCreatedBy("Lalith Kahatapitiya");
         postDto.setProfileUrl("https://lh3.googleusercontent.com/a/ACg8ocJRH_OSbF2Rwv2IUTEEnPiYt2060hjVXv3pPCELza9PJTZtsSQ=s96-c");
         postDto.setCreatedAt(localDateTimeToString(post.getCreatedAt()));
-        postDto.setReactCount(post.getReactionPosts().size());
+        postDto.setReactCount(post.getPostReactions().size());
         postDto.setViewCount(post.getViewCount());
         postDto.setEditable(post.getCreatedBy().equals(username));
         return postDto;
@@ -129,6 +131,9 @@ public class ForumController {
     @GetMapping("/num/{num}")
     public String getView(@PathVariable("num") String num, Model model) {
         model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
+        model.addAttribute("persistPostReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistPostReaction", "", "").toUriString()));
+        model.addAttribute("getPostReactionUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostReaction", "").toUriString());
+
         return "post/view";
     }
 
@@ -136,11 +141,60 @@ public class ForumController {
     @ResponseBody
     public ResponseEntity<PostViewDto> getPostView(@PathVariable("number") String number) {
         Post post = postService.findByNumber(number);
-//        todo need to create postViewDto
+
         var postViewDto = new PostViewDto();
         postViewDto.setNumber(post.getNumber());
         postViewDto.setTitle(post.getTitle());
         postViewDto.setContent(post.getContent());
+        postViewDto.setPostOwner("Lalith Kahatapitiya");
+        postViewDto.setPostViewCount(post.getViewCount());
         return new ResponseEntity<>(postViewDto, HttpStatus.OK);
+    }
+
+    private Map<Reaction, Long> allReactionList() {
+        Map<Reaction, Long> reactionCounts = new EnumMap<>(Reaction.class);
+        for (Reaction reaction : Reaction.values()) {
+            reactionCounts.put(reaction, 0L);
+        }
+        return reactionCounts;
+    }
+
+    private Map<Reaction, Long> countReactionPost(List<PostReaction> reactions) {
+        Map<Reaction, Long> reactionCounts = allReactionList();
+        reactionCounts.putAll(reactions.stream().filter(reaction -> reaction.getReaction() != null).collect(Collectors.groupingBy(PostReaction::getReaction, Collectors.counting())));
+        return reactionCounts;
+    }
+
+    @GetMapping("/view/{number}/{reaction}")
+    public String persistPostReaction(@PathVariable("number") String number, @PathVariable("reaction") Reaction reaction) {
+        var username = SecurityContextHolder.getContext().getAuthentication().getName();
+        var post = postService.findByNumber(number);
+        PostReaction postReaction = postReactionService.findByPostAndCreatedBy(post, username);
+        if (postReaction == null) {
+            postReaction = new PostReaction(reaction, post);
+            postReactionService.persist(postReaction);
+        } else {
+            if (postReaction.getReaction().equals(reaction)) {
+                postReactionService.deleteByPostReaction(postReaction);
+            } else {
+                postReaction.setReaction(reaction);
+                postReactionService.persist(postReaction);
+            }
+        }
+        return "redirect:/forum/post/reaction/" + number;
+    }
+
+    @GetMapping("/post/reaction/{number}")
+    @ResponseBody
+    public Map<Reaction, Long> getPostReaction(@PathVariable("number") String number) {
+        var post = postService.findByNumber(number);
+        return countReactionPost(post.getPostReactions());
+    }
+
+    private String removeTrailingSlash(String url) {
+        if (url != null && url.endsWith("/")) {
+            return url.substring(0, url.length() - 1);
+        }
+        return url;
     }
 }

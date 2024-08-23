@@ -2,7 +2,7 @@ package cyou.forum.post.entity;
 
 import cyou.audit.AuditEntity;
 import cyou.forum.comment.entity.Comment;
-import cyou.forum.post_comment_reaction.entity.ReactionPost;
+import cyou.forum.post_reaction.entity.PostReaction;
 import cyou.forum.post_tag.entity.PostTag;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -25,7 +25,6 @@ public class Post extends AuditEntity {
 
     private String number;
 
-
     @NotNull
     private String title;
 
@@ -47,7 +46,7 @@ public class Post extends AuditEntity {
     private Set<PostTag> postTags = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReactionPost> reactionPosts = new ArrayList<>();
+    private List<PostReaction> postReactions = new ArrayList<>();
 
 
 }

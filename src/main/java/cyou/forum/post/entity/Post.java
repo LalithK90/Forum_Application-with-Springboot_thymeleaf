@@ -30,6 +30,7 @@ public class Post extends AuditEntity {
 
     @NotNull
     @Column(columnDefinition = "LONGTEXT")
+    @Lob
     private String content;
 
     private int viewCount = 0;
@@ -41,8 +42,7 @@ public class Post extends AuditEntity {
     @JoinTable(
             name = "post_post_tag",
             joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "post_tag_id")
-    )
+            inverseJoinColumns = @JoinColumn(name = "post_tag_id"))
     private Set<PostTag> postTags = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)

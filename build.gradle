@@ -36,6 +36,7 @@ dependencies {
 	implementation 'org.webjars:bootstrap:5.3.0'
 	implementation 'org.webjars:font-awesome:6.0.0'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 
 	runtimeOnly 'com.mysql:mysql-connector-j'
 

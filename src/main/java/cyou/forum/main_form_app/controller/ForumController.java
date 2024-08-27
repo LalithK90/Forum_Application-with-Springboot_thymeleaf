@@ -1,10 +1,13 @@
 package cyou.forum.main_form_app.controller;
 
+import cyou.CommonService;
 import cyou.enums.Reaction;
+import cyou.forum.comment.entity.Comment;
 import cyou.forum.comment.service.CommentService;
-import cyou.forum.main_form_app.dto.PostDeleteDto;
-import cyou.forum.main_form_app.dto.PostDto;
-import cyou.forum.main_form_app.dto.PostViewDto;
+import cyou.forum.comment_reaction.entity.CommentReaction;
+import cyou.forum.comment_reaction.service.CommentReactionService;
+import cyou.forum.main_form_app.dto.*;
+import cyou.forum.main_form_app.mappers.CommentMapper;
 import cyou.forum.post.entity.Post;
 import cyou.forum.post.service.PostService;
 import cyou.forum.post_reaction.entity.PostReaction;
@@ -12,6 +15,7 @@ import cyou.forum.post_reaction.service.PostReactionService;
 import cyou.forum.post_tag.service.PostTagService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -32,18 +36,26 @@ import java.util.stream.Collectors;
 @Controller
 @AllArgsConstructor
 @RequestMapping("/forum")
+@Slf4j
 public class ForumController {
 
     private final PostService postService;
     private final PostTagService postTagService;
     private final CommentService commentService;
     private final PostReactionService postReactionService;
+    private final CommentReactionService commentReactionService;
+    private final CommonService commonService;
 
     @GetMapping
     public String postPage(Model model) {
         model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
+        model.addAttribute("persistCommentUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistComment", "").toUriString());
         model.addAttribute("persistPostReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistPostReaction", "", "").toUriString()));
         model.addAttribute("getPostReactionUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostReaction", "").toUriString());
+        model.addAttribute("getCommentUrl",
+                MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getComments", "", "", "").toUriString());
+        model.addAttribute("persistCommentReactionUrl",
+                removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistCommentReaction", "", "").toUriString()));
         return "post/post";
     }
 
@@ -127,16 +139,6 @@ public class ForumController {
         return new ResponseEntity<>(new PostDeleteDto(status, redirectUrl), HttpStatus.OK);
     }
 
-    //    dummy method for view
-    @GetMapping("/num/{num}")
-    public String getView(@PathVariable("num") String num, Model model) {
-        model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
-        model.addAttribute("persistPostReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistPostReaction", "", "").toUriString()));
-        model.addAttribute("getPostReactionUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostReaction", "").toUriString());
-
-        return "post/view";
-    }
-
     @GetMapping("/view/{number}")
     @ResponseBody
     public ResponseEntity<PostViewDto> getPostView(@PathVariable("number") String number) {
@@ -148,6 +150,7 @@ public class ForumController {
         postViewDto.setNumber(post.getNumber());
         postViewDto.setTitle(post.getTitle());
         postViewDto.setContent(post.getContent());
+//        todo get data from userprofile
         postViewDto.setPostOwner("Lalith Kahatapitiya");
         postViewDto.setPostViewCount(post.getViewCount());
         return new ResponseEntity<>(postViewDto, HttpStatus.OK);
@@ -199,4 +202,67 @@ public class ForumController {
         }
         return url;
     }
+
+    private final CommentMapper commentMapper;
+
+    @PostMapping("/post/comment")
+    @ResponseBody
+    private ResponseEntity<CommentViewDto> persistComment(@RequestBody CommentSaveDto commentSaveDto) {
+        commonService.printAttributesInObject(commentSaveDto);
+        Comment comment = new Comment();
+        if (commentSaveDto.getCommentId() != null) {
+            comment.setParentComment(commentService.findById(commentSaveDto.getCommentId()));
+        }
+
+        if (commentSaveDto.getNumber() != null) {
+            var post = postService.findByNumber(commentSaveDto.getNumber());
+            comment.setPost(post);
+        }
+        comment.setContent(commentSaveDto.getContent());
+        return new ResponseEntity<>(commentMapper.toDto(commentService.persist(comment)), HttpStatus.OK);
+    }
+
+    @GetMapping("/comment/{number}")
+    @ResponseBody
+    public Page<CommentViewDto> getComments(@PathVariable("number") String number,
+                                            @RequestParam(defaultValue = "0") int page,
+                                            @RequestParam(defaultValue = "5") int size) {
+        log.info("number {},  page {},  size  {}", number, page, size);
+        var post = postService.findByNumber(number);
+        return commentService.findByPost(post, page, size);
+    }
+
+    @GetMapping("/view/comment/{id}/{reaction}")
+    public String persistCommentReaction(@PathVariable("id") long id, @PathVariable("reaction") Reaction reaction) {
+        var username = SecurityContextHolder.getContext().getAuthentication().getName();
+        var comment = commentService.findById(id);
+        CommentReaction postReaction = commentReactionService.findByCommentAndCreatedBy(comment, username);
+        if (postReaction == null) {
+            postReaction = new CommentReaction(reaction, comment);
+            commentReactionService.persist(postReaction);
+        } else {
+            if (postReaction.getReaction().equals(reaction)) {
+                commentReactionService.deleteByCommentReaction(postReaction);
+            } else {
+                postReaction.setReaction(reaction);
+                commentReactionService.persist(postReaction);
+            }
+        }
+        return "redirect:/forum/comment/reaction/" + id;
+    }
+
+    @GetMapping("/comment/reaction/{id}")
+    @ResponseBody
+    public Map<Reaction, Long> getCommentReaction(@PathVariable("id") long id) {
+        var comment = commentService.findById(id);
+        return countReactionComment(comment.getCommentReactions());
+    }
+
+    private Map<Reaction, Long> countReactionComment(List<CommentReaction> reactions) {
+        Map<Reaction, Long> reactionCounts = allReactionList();
+        reactionCounts.putAll(reactions.stream().filter(reaction -> reaction.getReaction() != null).collect(Collectors.groupingBy(CommentReaction::getReaction, Collectors.counting())));
+        return reactionCounts;
+    }
+
+
 }

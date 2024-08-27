@@ -5,8 +5,9 @@
 </head>
 <body>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
+<div data-th-replace="~{fragments/trumbowygStyle :: trumbowygStyleFragment}"></div>
 <nav data-th-replace="~{fragments/navBar :: navBarFragment}"></nav>
+
 <style>
     .singlePost:hover {
         background-color: #9dec83;
@@ -74,28 +75,31 @@
         </nav>
     </div>
 </div>
-<div class="row p-5">
-    <!-- Comments Icon -->
-    <i class="fas fa-comments"></i> Forum
+<!--<div class="row p-5">-->
+<!--    &lt;!&ndash; Comments Icon &ndash;&gt;-->
+<!--    <i class="fas fa-comments"></i> Forum-->
 
-    <!-- Comment Icon -->
-    <i class="fas fa-comment"></i> Start a Discussion
+<!--    &lt;!&ndash; Comment Icon &ndash;&gt;-->
+<!--    <i class="fas fa-close"></i> Start a Discussion-->
 
-    <!-- User Friends Icon -->
-    <i class="fas fa-user-friends"></i> Community
+<!--    &lt;!&ndash; Comment Icon &ndash;&gt;-->
+<!--    <i class="fas fa-comment"></i> Start a Discussion-->
 
-    <!-- Users Icon -->
-    <i class="fas fa-users"></i> Members
+<!--    &lt;!&ndash; User Friends Icon &ndash;&gt;-->
+<!--    <i class="fas fa-user-friends"></i> Community-->
 
-    <!-- Bullhorn Icon -->
-    <i class="fas fa-bullhorn"></i> Announcements
+<!--    &lt;!&ndash; Users Icon &ndash;&gt;-->
+<!--    <i class="fas fa-users"></i> Members-->
 
-    <!-- Envelope Icon -->
-    <i class="fas fa-envelope"></i> Messages
-</div>
+<!--    &lt;!&ndash; Bullhorn Icon &ndash;&gt;-->
+<!--    <i class="fas fa-bullhorn"></i> Announcements-->
+
+<!--    &lt;!&ndash; Envelope Icon &ndash;&gt;-->
+<!--    <i class="fas fa-envelope"></i> Messages-->
+<!--</div>-->
 <!-- The Modal -->
 <div class="modal fade" id="myModal">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
         <div class="modal-content">
 
             <!-- Modal Header -->
@@ -105,24 +109,98 @@
             </div>
 
             <!-- Modal body -->
-            <div class="modal-body">
-                <div class="text-center" id="modelContainer">
-                    <i class="fas fa-spinner fa-spin fa-3x"></i>
-                    <!--                    todo need to manage how view post and comment on here-->
-                </div>
+            <div class="modal-body" id="modalBody">
+                <div class="row">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <div class="row text-center" id="modal_load">
+                            <i class="fas fa-spinner fa-spin fa-5x"></i>
+                        </div>
+                        <div class="container-fluid mt-4">
+                            <!-- Blog Post -->
+                            <div id="blogPost" class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title text-center fw-bold shadow" id="post_title"></h4>
+                                    <h6 class="card-subtitle mb-2 text-muted text-right" id="post_owner"></h6>
+                                    <div class="container" id="post_content"></div>
+                                    <div class="row">
+                                        <div class="col-sm-4 d-flex justify-content-start">
+                                            <button class="btn btn-outline-primary" id="btnComment">
+                                                <i class="fas fa-comment"></i> Comment
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm rounded-pill btn-outline-secondary mx-1">
+                                                <i class="fas fa-eye mx-1"></i><span id="postViewCount"></span>
+                                            </button>
+                                        </div>
+                                        <div class="col-sm-8 d-flex justify-content-end">
+                                            <div class="btn-group col-sm-8" role="group"
+                                                 aria-label="Reaction button group">
+                                                <button type="button"
+                                                        class="btn btn-sm mx-1 rounded-pill btn-outline-primary"
+                                                        onclick="submitReaction('LIKE')">
+                                                    <i class="fas fa-thumbs-up"></i> <span id="likeCount"></span>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm mx-1 rounded-pill btn-outline-secondary"
+                                                        onclick="submitReaction('DIS_LIKE')">
+                                                    <i class="fas fa-thumbs-down"></i> <span id="dislikeCount"></span>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm mx-1 rounded-pill btn-outline-success"
+                                                        onclick="submitReaction('CELEBRATE')">
+                                                    <i class="fas fa-star"></i> <span id="celebrateCount"></span>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm mx-1 rounded-pill btn-outline-warning"
+                                                        onclick="submitReaction('SUPPORTIVE')">
+                                                    <i class="fas fa-hands-helping"></i> <span id="supportCount"></span>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm mx-1 rounded-pill btn-outline-danger"
+                                                        onclick="submitReaction('LOVE')">
+                                                    <i class="fas fa-heart"></i> <span id="loveCount"></span>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm mx-1 rounded-pill btn-outline-info"
+                                                        onclick="submitReaction('INSIGHTFUL')">
+                                                    <i class="fas fa-lightbulb"></i> <span id="insightfulCount"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--    comments -->
+                            <div class="row">
+                                <div class="container" id="commentSection">
 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-1"></div>
+                </div>
             </div>
 
             <!-- Modal footer -->
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+            <div class="row justify-content-center">
+                <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal"><i
+                        class="fas fa-close mx-2"></i> Close
+                </button>
             </div>
 
         </div>
     </div>
 </div>
 <input type="hidden" data-th-value="${postDetailUrl}" id="postDetailUrl">
+<input type="hidden" data-th-value="${persistPostReactionUrl}" id="persistPostReactionUrl">
+<input type="hidden" data-th-value="${getPostReactionUrl}" id="getPostReactionUrl">
+<input type="hidden" data-th-value="${getCommentUrl}" id="getCommentUrl">
+<input type="hidden" data-th-value="${persistCommentReactionUrl}" id="persistCommentReactionUrl">
+<input type="hidden" data-th-value="${persistCommentUrl}" id="persistCommentUrl">
 <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<div data-th-replace="~{fragments/trumbowygScript :: trumbowygScriptFragment}"></div>
 <script defer src="/js/post.js"></script>
 </body>
 </html>

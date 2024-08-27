@@ -22,6 +22,7 @@ public class Comment extends AuditEntity {
 
     @NotNull
     @Column(columnDefinition = "LONGTEXT")
+    @Lob
     private String content;
 
     @ManyToOne
@@ -34,7 +35,7 @@ public class Comment extends AuditEntity {
     private List<Comment> replies = new ArrayList<>();
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentReaction> reactionComments = new ArrayList<>();
+    private List<CommentReaction> commentReactions;
 
 
 }

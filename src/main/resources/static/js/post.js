@@ -1,4 +1,3 @@
-/*
 $(document).ready(function () {
     let currentPage = 1;
     let postsPerPage = $("#postForPage").val();
@@ -8,7 +7,6 @@ $(document).ready(function () {
             url: `/forum/api/posts?page=${page}&size=${postsPerPage}&sortOrder=${sortOrder}`,
             method: 'GET',
             success: function (data) {
-                console.log(data)
                 renderPosts(data.posts);
                 renderPagination(data.totalPages, page);
             },
@@ -53,7 +51,7 @@ $(document).ready(function () {
                 <button class="btn btn-outline-primary"><i class="fas fa-edit"></i></button>
               </a>
             </div>`;
-        }else {
+        } else {
             return ``;
         }
     }
@@ -83,46 +81,54 @@ $(document).ready(function () {
 
     fetchPosts(currentPage, 'latest');
 });
-*/
+
+
 let number;
-$(document).ready(function () {
-    getData('DoL338YSF9');
-})
+let page;
 
 function getData(val) {
+    page = 0;
+    let modal_lod = $("#modal_load");
+    modal_lod.show();
+    hideCommentSection()
     let postTitle = $("#post_title");
     let postOwner = $("#post_owner");
     let postContent = $("#post_content");
     let postViewCount = $("#postViewCount");
 
-
     let postDetailUrl = $("#postDetailUrl").val();
     $.ajax({
-        url: `${postDetailUrl}${val}`,
-        method: 'GET',
-        success: function (data) {
+        url: `${postDetailUrl}${val}`, method: 'GET', success: function (data) {
+            modal_lod.hide();
             postTitle.html(data.title);
             postOwner.html(data.postOwner);
             postViewCount.html(data.postViewCount);
             postContent.html(data.content);
             number = data.number;
             getReaction();
-        },
-        error: function (error) {
+            loadComments();
+        }, error: function (error) {
             console.error("Error fetching posts", error);
         }
     });
 }
 
+// get data when modal scroll
+$('#myModal .modal-body').on('scroll', function () {
+    let scrollHeight = $(this).prop('scrollHeight');
+    let scrollTop = $(this).scrollTop();
+    let clientHeight = $(this).outerHeight();
+    if (scrollTop + clientHeight >= scrollHeight) {
+        loadComments();
+    }
+});
+
 function getReaction() {
     let getPostReactionUrl = $("#getPostReactionUrl").val() + number;
     $.ajax({
-        url: getPostReactionUrl,
-        method: 'GET',
-        success: function (data) {
+        url: getPostReactionUrl, method: 'GET', success: function (data) {
             setReactionCount(data)
-        },
-        error: function (error) {
+        }, error: function (error) {
             console.error("Error fetching posts", error);
         }
     });
@@ -131,12 +137,9 @@ function getReaction() {
 function submitReaction(reaction) {
     let persistPostReactionUrl = $("#persistPostReactionUrl").val() + number + "/" + reaction;
     $.ajax({
-        url: persistPostReactionUrl,
-        method: 'GET',
-        success: function (data) {
+        url: persistPostReactionUrl, method: 'GET', success: function (data) {
             setReactionCount(data)
-        },
-        error: function (error) {
+        }, error: function (error) {
             console.error("Error fetching posts", error);
         }
     });
@@ -146,8 +149,193 @@ function setReactionCount(data) {
     $("#likeCount").html(data.LIKE);
     $("#dislikeCount").html(data.DIS_LIKE);
     $("#celebrateCount").html(data.CELEBRATE);
-    $("#supportCount").html(data.SUPPORT);
+    $("#supportCount").html(data.SUPPORTIVE);
     $("#loveCount").html(data.LOVE);
     $("#insightfulCount").html(data.INSIGHTFUL);
 }
 
+let comments = [];
+
+function loadComments() {
+    let postId = number;
+    const commentSection = $('#commentSection');
+    let url = $("#getCommentUrl").val().replace("?page=&size=", "");
+    let cleanedUrl = url.replace("?page=&size=", "");
+
+    $.ajax({
+        url: `${cleanedUrl}${postId}`,
+        data: {page: page, size: 5},
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            data.content.forEach(x => {
+                let exist = comments.some(obj => parseInt(obj.id) === parseInt(x.id))
+                if (!exist) {
+                    comments.push(x)
+                }
+            })
+            commentSection.empty();
+            appendComments();
+            let size = data.page.size;
+            let number = data.page.number;
+            let totalElement = data.page.totalElements;
+            let totalPages = data.page.totalPages;
+
+            if (number !== totalPages && (totalElement % size === 0)) {
+                page++;
+            }
+
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading comments:', error);
+        }
+    });
+
+    function appendComments(indentLevel = 0) {
+        // comments.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+        comments.forEach(comment => {
+            let html = createCommentHtml(comment, indentLevel);
+            commentSection.append(html);
+            if (comment.replies && comment.replies.length > 0) {
+                appendComments(comment.replies, indentLevel + 1);
+            }
+        });
+    }
+
+    function createCommentHtml(comment, indentLevel) {
+        let indent = `<div class="row p-2"><div class="col-sm-${indentLevel}"></div><div class="col-sm-${12 - indentLevel}">`;
+        return indent + makeCommentView(comment) + `</div></div>`;
+    }
+}
+
+
+function makeCommentView(comment) {
+    return `<div class="card" id="comment_card_${comment.id}">
+              <div class="card-body" id="comment_body_${comment.id}">${comment.content}</div>
+              <div class="row">
+                <div class="d-flex justify-content-end">
+                  <div class="btn-group" role="group" aria-label="Reaction button group">
+                  <button class="btn btn-sm rounded-pill btn-outline-primary mx-1" onclick="commentForComment(${comment.id})"><i class="fas fa-comment"></i></button>
+                  ${comment.editable ? `<button class="btn btn-sm rounded-pill btn-outline-info mx-1" onclick="editComment(${comment.id})"><i class="fas fa-edit"></i></button>` : ''}
+                  <span class="card-subtitle text-muted text-right mx-1"> ${comment.createdBy}  at ${comment.createdAt}</span>
+                    <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-primary" onclick="submitCommentReaction(${comment.id},'LIKE')">
+                      <i class="fas fa-thumbs-up"></i> <span id="LIKE_${comment.id}">${comment.commentReactions.LIKE}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-secondary" onclick="submitCommentReaction(${comment.id},'DIS_LIKE')">
+                      <i class="fas fa-thumbs-down"></i> <span id="DIS_LIKE_${comment.id}">${comment.commentReactions.DIS_LIKE}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-success" onclick="submitCommentReaction(${comment.id},'CELEBRATE')">
+                      <i class="fas fa-star"></i> <span id="CELEBRATE_${comment.id}">${comment.commentReactions.CELEBRATE}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-warning" onclick="submitCommentReaction(${comment.id},'SUPPORTIVE')">
+                      <i class="fas fa-hands-helping"></i> <span id="SUPPORTIVE_${comment.id}">${comment.commentReactions.SUPPORTIVE}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-danger" onclick="submitCommentReaction(${comment.id},'LOVE')">
+                      <i class="fas fa-heart"></i> <span id="LOVE_${comment.id}">${comment.commentReactions.LOVE}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm mx-1 rounded-pill btn-outline-info" onclick="submitCommentReaction(${comment.id},'INSIGHTFUL')">
+                      <i class="fas fa-lightbulb"></i> <span id="INSIGHTFUL_${comment.id}">${comment.commentReactions.INSIGHTFUL}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+           </div>`;
+}
+
+function submitCommentReaction(commentId, reaction) {
+    let persistPostReactionUrl = $("#persistCommentReactionUrl").val() + commentId + "/" + reaction;
+    $.ajax({
+        url: persistPostReactionUrl, method: 'GET', success: function (data) {
+            setReactionToCommentCount(commentId, data)
+        }, error: function (error) {
+            console.error("Error fetching posts", error);
+        }
+    });
+}
+
+function setReactionToCommentCount(id, data) {
+    $(`#LIKE_${id}`).html(data.LIKE);
+    $(`#DIS_LIKE_${id}`).html(data.DIS_LIKE);
+    $(`#CELEBRATE_${id}`).html(data.CELEBRATE);
+    $(`#SUPPORTIVE_${id}`).html(data.SUPPORTIVE);
+    $(`#LOVE_${id}`).html(data.LOVE);
+    $(`#INSIGHTFUL_${id}`).html(data.INSIGHTFUL);
+}
+
+function commentForComment(commentId) {
+    hideCommentSection();
+    let commentAfter = $(`#comment_card_${commentId}`);
+    commentAfter.after(commentSection(commentId, ''))
+    trumbowygCall();
+}
+
+function editComment(commentId) {
+    hideCommentSection();
+    let textComment = $(`#comment_card_${commentId}`);
+    let commentAfter = $(`#comment_body_${commentId}`);
+    textComment.after(commentSection(commentId, commentAfter.html()))
+    trumbowygCall();
+}
+
+$("#btnComment").click(function () {
+    hideCommentSection();
+    const blogPost = $("#blogPost");
+    blogPost.after(commentSection('', ''))
+    trumbowygCall();
+})
+
+function commentSection(id, text) {
+    return `<div class="card p-3" id="commentNewSection">
+              <form id="commentForm">
+               <input type="hidden" value="${id}" id="commentId_${id}"/>
+                 <div class="mb-3">
+                   <label for="content" class="form-label">Comment</label>
+                     <textarea class="form-control" id="comment_content_${id}" rows="3">${text}</textarea>
+                 </div>
+                 <div class="mb-3">
+                   <button type="button" class="btn btn-sm btn-outline-info" onclick="saveComment(${id})">Save Comment</button>
+                 </div>
+               </form>
+            </div>`;
+}
+
+function hideCommentSection() {
+    $("#commentNewSection").remove();
+}
+
+function saveComment(id) {
+    let number_post = '';
+    let content;
+    if (!id) {
+        number_post = number;
+        content = $(`#comment_content_`).val()
+    } else {
+        content = $(`#comment_content_${id}`).val()
+    }
+    let commentDto = {
+        commentId: $(`#commentId_${id}`).val(),
+        number: number_post,
+        content: content
+    }
+    let url = $("#persistCommentUrl").val();
+    $.ajax({
+        url: `${url}`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(commentDto),
+        success: function (data) {
+            let exist = comments.some(obj => parseInt(obj.id) === parseInt(data.id))
+            if (!exist) {
+                comments.push(data)
+                loadComments();
+            }
+            hideCommentSection()
+        }, error: function (error) {
+            console.error("Error fetching posts", error);
+        }
+    });
+}
+
+// need to manage scroll function in side the modal
+// need to create react save and get react for comment reaction
+// need to edit comment in side

@@ -31,8 +31,9 @@ public class CommentServiceImpl implements CommentService {
         return commentDao.findByIdAndCreatedBy(commentId,username);
     }
 
-    public void deleteByComment(Comment comment) {
+    public boolean deleteByComment(Comment comment) {
         commentDao.delete(comment);
+        return true;
     }
 
     public Page<CommentViewDto> findByPost(Post post, int page, int size) {

@@ -16,5 +16,5 @@ public interface CommentService {
 
     Comment findByIdAndCreatedBy(Long commentId, String username);
 
-    void deleteByComment(Comment comment);
+    boolean deleteByComment(Comment comment);
 }

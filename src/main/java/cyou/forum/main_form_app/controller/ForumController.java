@@ -50,6 +50,7 @@ public class ForumController {
     public String postPage(Model model) {
         model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
         model.addAttribute("persistCommentUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistComment", "").toUriString());
+        model.addAttribute("deleteCommentUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "deleteComment", "").toUriString());
         model.addAttribute("persistPostReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistPostReaction", "", "").toUriString()));
         model.addAttribute("getPostReactionUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostReaction", "").toUriString());
         model.addAttribute("getCommentUrl",
@@ -207,19 +208,25 @@ public class ForumController {
 
     @PostMapping("/post/comment")
     @ResponseBody
-    private ResponseEntity<CommentViewDto> persistComment(@RequestBody CommentSaveDto commentSaveDto) {
+    private ResponseEntity<String> persistComment(@RequestBody CommentSaveDto commentSaveDto) {
         commonService.printAttributesInObject(commentSaveDto);
         Comment comment = new Comment();
         if (commentSaveDto.getCommentId() != null) {
-            comment.setParentComment(commentService.findById(commentSaveDto.getCommentId()));
-        }
-
-        if (commentSaveDto.getNumber() != null) {
+            if (commentSaveDto.isEdit()) {
+                comment = commentService.findById(commentSaveDto.getCommentId());
+            } else {
+                comment = new Comment();
+                comment.setParentComment(commentService.findById(commentSaveDto.getCommentId()));
+            }
+            comment.setContent(commentSaveDto.getContent());
+        } else if (commentSaveDto.getNumber() != null) {
+            comment = new Comment();
             var post = postService.findByNumber(commentSaveDto.getNumber());
             comment.setPost(post);
+            comment.setContent(commentSaveDto.getContent());
         }
-        comment.setContent(commentSaveDto.getContent());
-        return new ResponseEntity<>(commentMapper.toDto(commentService.persist(comment)), HttpStatus.OK);
+        commentService.persist(comment);
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @GetMapping("/comment/{number}")
@@ -229,6 +236,7 @@ public class ForumController {
                                             @RequestParam(defaultValue = "5") int size) {
         log.info("number {},  page {},  size  {}", number, page, size);
         var post = postService.findByNumber(number);
+        log.info("come here list {}", LocalDateTime.now());
         return commentService.findByPost(post, page, size);
     }
 
@@ -264,5 +272,15 @@ public class ForumController {
         return reactionCounts;
     }
 
+    @GetMapping("/delete/comment/{id}")
+    @ResponseBody
+    public ResponseEntity<Boolean> deleteComment(@PathVariable("id") Long id) {
+        var comment = commentService.findById(id);
+        var delete = false;
+        if (comment.getCreatedBy().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
+            delete = commentService.deleteByComment(comment);
+        }
+        return new ResponseEntity<>(delete, HttpStatus.OK);
+    }
 
 }

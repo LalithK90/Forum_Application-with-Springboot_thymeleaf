@@ -154,8 +154,6 @@ function setReactionCount(data) {
     $("#insightfulCount").html(data.INSIGHTFUL);
 }
 
-let comments = [];
-
 function loadComments() {
     let postId = number;
     const commentSection = $('#commentSection');
@@ -168,32 +166,29 @@ function loadComments() {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            data.content.forEach(x => {
-                let exist = comments.some(obj => parseInt(obj.id) === parseInt(x.id))
-                if (!exist) {
-                    comments.push(x)
-                }
-            })
-            commentSection.empty();
-            appendComments();
+            commentSection.empty()
+            let dataArray=data.content.sort((a, b) => b.id - a.id);
+            const uniqueObjects = filterUniqueById(dataArray)
+
+            appendComments(uniqueObjects);
+
             let size = data.page.size;
             let number = data.page.number;
             let totalElement = data.page.totalElements;
             let totalPages = data.page.totalPages;
 
-            if (number !== totalPages && (totalElement % size === 0)) {
+            console.log(data.page)
+            if (!data.last) {
                 page++;
             }
-
         },
         error: function (xhr, status, error) {
             console.error('Error loading comments:', error);
         }
     });
 
-    function appendComments(indentLevel = 0) {
-        // comments.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-        comments.forEach(comment => {
+    function appendComments(commentsArray, indentLevel = 0) {
+        commentsArray.forEach(comment => {
             let html = createCommentHtml(comment, indentLevel);
             commentSection.append(html);
             if (comment.replies && comment.replies.length > 0) {
@@ -206,8 +201,18 @@ function loadComments() {
         let indent = `<div class="row p-2"><div class="col-sm-${indentLevel}"></div><div class="col-sm-${12 - indentLevel}">`;
         return indent + makeCommentView(comment) + `</div></div>`;
     }
+
+
 }
 
+const filterUniqueById = (array) => {
+    const seen = new Set();
+    return array.filter(obj => {
+        const duplicate = seen.has(obj.id);
+        seen.add(obj.id);
+        return !duplicate;
+    });
+};
 
 function makeCommentView(comment) {
     return `<div class="card" id="comment_card_${comment.id}">
@@ -215,6 +220,7 @@ function makeCommentView(comment) {
               <div class="row">
                 <div class="d-flex justify-content-end">
                   <div class="btn-group" role="group" aria-label="Reaction button group">
+                  ${comment.editable ? `<button class="btn btn-sm rounded-pill btn-outline-danger mx-2" onclick="deleteComment(${comment.id})"><i class="fas fa-trash"></i></button>` : ''}
                   <button class="btn btn-sm rounded-pill btn-outline-primary mx-1" onclick="commentForComment(${comment.id})"><i class="fas fa-comment"></i></button>
                   ${comment.editable ? `<button class="btn btn-sm rounded-pill btn-outline-info mx-1" onclick="editComment(${comment.id})"><i class="fas fa-edit"></i></button>` : ''}
                   <span class="card-subtitle text-muted text-right mx-1"> ${comment.createdBy}  at ${comment.createdAt}</span>
@@ -242,6 +248,26 @@ function makeCommentView(comment) {
            </div>`;
 }
 
+function deleteComment(commentId) {
+    const deleteUrl = $("#deleteCommentUrl").val();
+    $.ajax({
+        url: `${deleteUrl}${commentId}`,
+        method: 'GET',
+        success: function (data) {
+            console.log(data)
+            loadComments()
+            comments.forEach(x => {
+                if (parseInt(x.id) === parseInt(commentId)) {
+                    comments.pop()
+                }
+            })
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading comments:', error);
+        }
+    });
+}
+
 function submitCommentReaction(commentId, reaction) {
     let persistPostReactionUrl = $("#persistCommentReactionUrl").val() + commentId + "/" + reaction;
     $.ajax({
@@ -265,7 +291,7 @@ function setReactionToCommentCount(id, data) {
 function commentForComment(commentId) {
     hideCommentSection();
     let commentAfter = $(`#comment_card_${commentId}`);
-    commentAfter.after(commentSection(commentId, ''))
+    commentAfter.after(commentSection(commentId, '', false))
     trumbowygCall();
 }
 
@@ -273,21 +299,23 @@ function editComment(commentId) {
     hideCommentSection();
     let textComment = $(`#comment_card_${commentId}`);
     let commentAfter = $(`#comment_body_${commentId}`);
-    textComment.after(commentSection(commentId, commentAfter.html()))
+    textComment.after(commentSection(commentId, commentAfter.html(), true))
+    commentAfter.empty();
     trumbowygCall();
 }
 
 $("#btnComment").click(function () {
     hideCommentSection();
     const blogPost = $("#blogPost");
-    blogPost.after(commentSection('', ''))
+    blogPost.after(commentSection('', '', false))
     trumbowygCall();
 })
 
-function commentSection(id, text) {
+function commentSection(id, text, editStatus) {
     return `<div class="card p-3" id="commentNewSection">
               <form id="commentForm">
                <input type="hidden" value="${id}" id="commentId_${id}"/>
+               <input type="hidden" value="${editStatus}" id="commentIdEdit_${id}"/>
                  <div class="mb-3">
                    <label for="content" class="form-label">Comment</label>
                      <textarea class="form-control" id="comment_content_${id}" rows="3">${text}</textarea>
@@ -310,11 +338,12 @@ function saveComment(id) {
         number_post = number;
         content = $(`#comment_content_`).val()
     } else {
-        content = $(`#comment_content_${id}`).val()
+        content = $(`#comment_content_${id}`).val();
     }
     let commentDto = {
         commentId: $(`#commentId_${id}`).val(),
         number: number_post,
+        edit: $(`#commentIdEdit_${id}`).val(),
         content: content
     }
     let url = $("#persistCommentUrl").val();
@@ -324,12 +353,12 @@ function saveComment(id) {
         contentType: 'application/json',
         data: JSON.stringify(commentDto),
         success: function (data) {
-            let exist = comments.some(obj => parseInt(obj.id) === parseInt(data.id))
-            if (!exist) {
-                comments.push(data)
-                loadComments();
-            }
+            // console.log(data)
+            // if (!data.parentCommentId) {
+            //     comments.push(data)
+            // }
             hideCommentSection()
+            loadComments()
         }, error: function (error) {
             console.error("Error fetching posts", error);
         }

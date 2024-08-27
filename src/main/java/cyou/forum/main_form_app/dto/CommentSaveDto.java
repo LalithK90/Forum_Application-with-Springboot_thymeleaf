@@ -13,6 +13,7 @@ import lombok.Setter;
 public class CommentSaveDto {
     private Long commentId;
     private String number;
+    private boolean edit;
     @NotNull
     private String content;
 }

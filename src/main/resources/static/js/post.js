@@ -63,12 +63,12 @@ $(document).ready(function () {
         for (let i = 1; i <= totalPages; i++) {
             paginationContainer.append(`
                     <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#">${i}</a>
+                        <a class="page-link post-link" href="#">${i}</a>
                     </li>
                 `);
         }
 
-        $('.page-link').click(function (e) {
+        $('.post-link').click(function (e) {
             e.preventDefault();
             const page = parseInt($(this).text());
             fetchPosts(page, $('#sortOrder').val());
@@ -114,14 +114,14 @@ function getData(val) {
 }
 
 // get data when modal scroll
-$('#myModal .modal-body').on('scroll', function () {
-    let scrollHeight = $(this).prop('scrollHeight');
-    let scrollTop = $(this).scrollTop();
-    let clientHeight = $(this).outerHeight();
-    if (scrollTop + clientHeight >= scrollHeight) {
-        loadComments();
-    }
-});
+// $('#myModal .modal-body').on('scroll', function () {
+//     let scrollHeight = $(this).prop('scrollHeight');
+//     let scrollTop = $(this).scrollTop();
+//     let clientHeight = $(this).outerHeight();
+//     if (scrollTop + clientHeight >= scrollHeight) {
+//         loadComments();
+//     }
+// });
 
 function getReaction() {
     let getPostReactionUrl = $("#getPostReactionUrl").val() + number;
@@ -154,6 +154,8 @@ function setReactionCount(data) {
     $("#insightfulCount").html(data.INSIGHTFUL);
 }
 
+let paginationData;
+
 function loadComments() {
     let postId = number;
     const commentSection = $('#commentSection');
@@ -167,20 +169,13 @@ function loadComments() {
         dataType: 'json',
         success: function (data) {
             commentSection.empty()
-            let dataArray=data.content.sort((a, b) => b.id - a.id);
+            let dataArray = data.content.sort((a, b) => b.id - a.id);
             const uniqueObjects = filterUniqueById(dataArray)
 
             appendComments(uniqueObjects);
-
-            let size = data.page.size;
-            let number = data.page.number;
-            let totalElement = data.page.totalElements;
-            let totalPages = data.page.totalPages;
-
             console.log(data.page)
-            if (!data.last) {
-                page++;
-            }
+            paginationData = data.page;
+            renderPagination(data.page)
         },
         error: function (xhr, status, error) {
             console.error('Error loading comments:', error);
@@ -202,20 +197,54 @@ function loadComments() {
         return indent + makeCommentView(comment) + `</div></div>`;
     }
 
+    function renderPagination(pagination) {
+        const {size, number, totalElements, totalPages} = pagination;
+        const $paginationElement = $('.pagination-comment');
+        $paginationElement.empty(); // Clear any existing pagination
 
-}
+        // Previous button
+        const prevDisabled = number === 0 ? 'disabled' : '';
+        $paginationElement.append(`
+                <li class="page-item ${prevDisabled}">
+                    <a class="page-link comment-link" href="#" aria-label="Previous" onclick="changePageNumber(${number - 1})">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            `);
 
-const filterUniqueById = (array) => {
-    const seen = new Set();
-    return array.filter(obj => {
-        const duplicate = seen.has(obj.id);
-        seen.add(obj.id);
-        return !duplicate;
-    });
-};
+        // Page numbers
+        for (let i = 0; i < totalPages; i++) {
+            const activeClass = i === number ? 'active' : '';
+            $paginationElement.append(`
+                    <li class="page-item ${activeClass}">
+                        <a class="page-link comment-link" href="#" onclick="changePageNumber(${i})">${i + 1}</a>
+                    </li>
+                `);
+        }
 
-function makeCommentView(comment) {
-    return `<div class="card" id="comment_card_${comment.id}">
+        // Next button
+        const nextDisabled = number === totalPages - 1 ? 'disabled' : '';
+        $paginationElement.append(`
+                <li class="page-item ${nextDisabled}">
+                    <a class="page-link comment-link" href="#" aria-label="Next" onclick="changePageNumber(${number + 1})">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            `);
+    }
+
+
+    const filterUniqueById = (array) => {
+        const seen = new Set();
+        return array.filter(obj => {
+            const duplicate = seen.has(obj.id);
+            seen.add(obj.id);
+            return !duplicate;
+        });
+    };
+
+    function makeCommentView(comment) {
+        return `<div class="card" id="comment_card_${comment.id}">
               <div class="card-body" id="comment_body_${comment.id}">${comment.content}</div>
               <div class="row">
                 <div class="d-flex justify-content-end">
@@ -246,6 +275,16 @@ function makeCommentView(comment) {
                 </div>
               </div>
            </div>`;
+    }
+
+}
+
+function changePageNumber(number) {
+    const pageNumber = parseInt(number, 10);
+    if (!isNaN(pageNumber) && pageNumber >= 0 && pageNumber < paginationData.totalPages) {
+        page = pageNumber;
+        loadComments();
+    }
 }
 
 function deleteComment(commentId) {
@@ -254,13 +293,7 @@ function deleteComment(commentId) {
         url: `${deleteUrl}${commentId}`,
         method: 'GET',
         success: function (data) {
-            console.log(data)
             loadComments()
-            comments.forEach(x => {
-                if (parseInt(x.id) === parseInt(commentId)) {
-                    comments.pop()
-                }
-            })
         },
         error: function (xhr, status, error) {
             console.error('Error loading comments:', error);

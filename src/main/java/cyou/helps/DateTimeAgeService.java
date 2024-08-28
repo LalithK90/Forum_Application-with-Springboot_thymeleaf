@@ -1,4 +1,4 @@
-package cyou;
+package cyou.helps;
 
 import org.springframework.stereotype.Service;
 

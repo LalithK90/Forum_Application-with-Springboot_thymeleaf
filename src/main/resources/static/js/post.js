@@ -394,18 +394,19 @@ function saveComment(id) {
     } else {
         content = $(`#comment_content_${id}`).val();
     }
-    let commentDto = {
+    let commentSaveDto = {
         commentId: $(`#commentId_${id}`).val(),
         number: number_post,
         edit: $(`#commentIdEdit_${id}`).val(),
         content: content
     }
     let url = $("#persistCommentUrl").val();
+    console.log(commentSaveDto)
     $.ajax({
         url: `${url}`,
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify(commentDto),
+        data: JSON.stringify(commentSaveDto),
         success: function (data) {
             hideCommentSection()
             loadComments()

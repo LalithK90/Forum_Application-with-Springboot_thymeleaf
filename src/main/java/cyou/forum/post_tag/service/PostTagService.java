@@ -10,8 +10,6 @@ public interface PostTagService {
 
     List<PostTag> findAll();
 
-    ;
-
     PostTag getPostById(Long id);
 
     PostTag savePost(PostTag post);

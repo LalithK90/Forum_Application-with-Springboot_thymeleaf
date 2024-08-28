@@ -1,13 +1,12 @@
 package cyou.forum.main_form_app.controller;
 
-import cyou.CommonService;
-import cyou.enums.Reaction;
 import cyou.forum.comment.entity.Comment;
+import cyou.helps.CommonService;
+import cyou.enums.Reaction;
 import cyou.forum.comment.service.CommentService;
 import cyou.forum.comment_reaction.entity.CommentReaction;
 import cyou.forum.comment_reaction.service.CommentReactionService;
 import cyou.forum.main_form_app.dto.*;
-import cyou.forum.main_form_app.mappers.CommentMapper;
 import cyou.forum.post.entity.Post;
 import cyou.forum.post.service.PostService;
 import cyou.forum.post_reaction.entity.PostReaction;
@@ -15,7 +14,6 @@ import cyou.forum.post_reaction.service.PostReactionService;
 import cyou.forum.post_tag.service.PostTagService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,9 +32,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
-@AllArgsConstructor
 @RequestMapping("/forum")
-@Slf4j
+@AllArgsConstructor
 public class ForumController {
 
     private final PostService postService;
@@ -46,6 +43,8 @@ public class ForumController {
     private final CommentReactionService commentReactionService;
     private final CommonService commonService;
 
+
+
     @GetMapping
     public String postPage(Model model) {
         model.addAttribute("postDetailUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostView", "").toUriString());
@@ -53,10 +52,8 @@ public class ForumController {
         model.addAttribute("deleteCommentUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "deleteComment", "").toUriString());
         model.addAttribute("persistPostReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistPostReaction", "", "").toUriString()));
         model.addAttribute("getPostReactionUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getPostReaction", "").toUriString());
-        model.addAttribute("getCommentUrl",
-                MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getComments", "", "", "").toUriString());
-        model.addAttribute("persistCommentReactionUrl",
-                removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistCommentReaction", "", "").toUriString()));
+        model.addAttribute("getCommentUrl", MvcUriComponentsBuilder.fromMethodName(ForumController.class, "getComments", "", "", "").toUriString());
+        model.addAttribute("persistCommentReactionUrl", removeTrailingSlash(MvcUriComponentsBuilder.fromMethodName(ForumController.class, "persistCommentReaction", "", "").toUriString()));
         return "post/post";
     }
 
@@ -125,7 +122,7 @@ public class ForumController {
     }
 
     @PostMapping("/post")
-    public String savePostPage(@Valid @ModelAttribute Post post, BindingResult result, Model model) {
+    public String persistPost(@Valid @ModelAttribute Post post, BindingResult result, Model model) {
         if (result.hasErrors()) {
             return commonForPost(model, post);
         }
@@ -208,7 +205,6 @@ public class ForumController {
     @PostMapping("/post/comment")
     @ResponseBody
     private ResponseEntity<String> persistComment(@RequestBody CommentSaveDto commentSaveDto) {
-        commonService.printAttributesInObject(commentSaveDto);
         Comment comment = new Comment();
         if (commentSaveDto.getCommentId() != null) {
             if (commentSaveDto.isEdit()) {
@@ -222,17 +218,14 @@ public class ForumController {
             comment = new Comment();
             var post = postService.findByNumber(commentSaveDto.getNumber());
             comment.setPost(post);
-            comment.setContent(commentSaveDto.getContent());
         }
-        commentService.persist(comment);
-        return new ResponseEntity<>("", HttpStatus.OK);
+        comment.setContent(commentSaveDto.getContent());
+        return new ResponseEntity<>("comment", HttpStatus.OK);
     }
 
     @GetMapping("/comment/{number}")
     @ResponseBody
-    public Page<CommentViewDto> getComments(@PathVariable("number") String number,
-                                            @RequestParam(defaultValue = "0") int page,
-                                            @RequestParam(defaultValue = "5") int size) {
+    public Page<CommentViewDto> getComments(@PathVariable("number") String number, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
         var post = postService.findByNumber(number);
         return commentService.findByPost(post, page, size);
     }
@@ -280,4 +273,6 @@ public class ForumController {
         return new ResponseEntity<>(delete, HttpStatus.OK);
     }
 
+
+//todo:  need to manage tag related post after taking post view
 }

@@ -1,8 +1,6 @@
 package cyou.forum.post.service.impl;
 
-import cyou.CommonService;
-import cyou.forum.comment.entity.Comment;
-import cyou.forum.comment.service.CommentService;
+import cyou.helps.CommonService;
 import cyou.forum.post.dao.PostDao;
 import cyou.forum.post.entity.Post;
 import cyou.forum.post.service.PostService;
@@ -10,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 
@@ -18,8 +17,9 @@ import java.util.HashSet;
 public class PostServiceImpl implements PostService {
 
     private final PostDao postDao;
-    private final CommentService commentService;
     private final CommonService commonService;
+
+
 
     public Page<Post> getAllPosts(Pageable pageable) {
         return postDao.findAll(pageable);
@@ -32,6 +32,7 @@ public class PostServiceImpl implements PostService {
         return postDao.save(post);
     }
 
+    @Transactional(readOnly = true)
     public Post findByNumber(String number) {
         return postDao.findByNumber(number);
     }
@@ -45,12 +46,6 @@ public class PostServiceImpl implements PostService {
             if (postTags != null) {
                 post.setPostTags(new HashSet<>());
                 postDao.save(post);
-            }
-            var comments = post.getComments();
-            if(comments != null){
-                for (Comment comment : comments) {
-                    commentService.deleteByComment(comment);
-                }
             }
             postDao.delete(post);
             return true;

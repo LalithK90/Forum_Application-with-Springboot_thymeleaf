@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class CommentServiceImpl implements CommentService {
+
     private final CommentMapper commentMapper;
     private final CommentDao commentDao;
+
 
     public Comment persist(Comment comment) {
         return commentDao.save(comment);
@@ -27,14 +29,12 @@ public class CommentServiceImpl implements CommentService {
         return commentDao.getReferenceById(commentId);
     }
 
-    public Comment findByIdAndCreatedBy(Long commentId, String username) {
-        return commentDao.findByIdAndCreatedBy(commentId,username);
-    }
-
     public boolean deleteByComment(Comment comment) {
         commentDao.delete(comment);
         return true;
     }
+
+
 
     public Page<CommentViewDto> findByPost(Post post, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"));

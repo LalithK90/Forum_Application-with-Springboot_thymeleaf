@@ -82,6 +82,7 @@ public class ForumController {
 
         response.put("posts", postDtos);
         response.put("totalPages", postPage.getTotalPages());
+        response.put("number", postPage.getNumber());
 
         return response;
     }
@@ -204,8 +205,6 @@ public class ForumController {
         return url;
     }
 
-    private final CommentMapper commentMapper;
-
     @PostMapping("/post/comment")
     @ResponseBody
     private ResponseEntity<String> persistComment(@RequestBody CommentSaveDto commentSaveDto) {
@@ -234,9 +233,7 @@ public class ForumController {
     public Page<CommentViewDto> getComments(@PathVariable("number") String number,
                                             @RequestParam(defaultValue = "0") int page,
                                             @RequestParam(defaultValue = "5") int size) {
-        log.info("number {},  page {},  size  {}", number, page, size);
         var post = postService.findByNumber(number);
-        log.info("come here list {}", LocalDateTime.now());
         return commentService.findByPost(post, page, size);
     }
 

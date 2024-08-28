@@ -1,14 +1,14 @@
 $(document).ready(function () {
     let currentPage = 1;
-    let postsPerPage = $("#postForPage").val();
 
     function fetchPosts(page, sortOrder) {
+        let postsPerPage = $("#postForPage").val();
         $.ajax({
             url: `/forum/api/posts?page=${page}&size=${postsPerPage}&sortOrder=${sortOrder}`,
             method: 'GET',
             success: function (data) {
                 renderPosts(data.posts);
-                renderPagination(data.totalPages, page);
+                renderPagination(data.number, data.totalPages);
             },
             error: function (error) {
                 console.error("Error fetching posts", error);
@@ -56,21 +56,42 @@ $(document).ready(function () {
         }
     }
 
-    function renderPagination(totalPages, currentPage) {
+    function renderPagination(number, totalPages) {
         let paginationContainer = $('.pagination');
         paginationContainer.empty();
+        // Previous button
+        const prevDisabled = number === 0 ? 'disabled' : '';
+        paginationContainer.append(`
+                <li class="page-item ${prevDisabled}">
+                    <a class="page-link post-link" href="#" aria-label="Previous" data-page="${number - 1}">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            `);
 
-        for (let i = 1; i <= totalPages; i++) {
+        // Page numbers
+        for (let i = 0; i < totalPages; i++) {
+            const activeClass = i === number ? 'active' : '';
             paginationContainer.append(`
-                    <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link post-link" href="#">${i}</a>
+                    <li class="page-item ${activeClass}">
+                        <a class="page-link post-link" href="#" data-page="${i}">${i + 1}</a>
                     </li>
                 `);
         }
 
+        // Next button
+        const nextDisabled = number === totalPages - 1 ? 'disabled' : '';
+        paginationContainer.append(`
+                <li class="page-item ${nextDisabled}">
+                    <a class="page-link post-link" href="#" aria-label="Next" data-page="${number + 1}">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            `);
+
         $('.post-link').click(function (e) {
             e.preventDefault();
-            const page = parseInt($(this).text());
+            let page = currentPage + parseInt($(this).data('page'), 10);
             fetchPosts(page, $('#sortOrder').val());
         });
     }
@@ -79,6 +100,9 @@ $(document).ready(function () {
         fetchPosts(currentPage, $(this).val());
     });
 
+    $('#postForPage').change(function () {
+        fetchPosts(currentPage, $('#sortOrder').val());
+    });
     fetchPosts(currentPage, 'latest');
 });
 
@@ -171,9 +195,7 @@ function loadComments() {
             commentSection.empty()
             let dataArray = data.content.sort((a, b) => b.id - a.id);
             const uniqueObjects = filterUniqueById(dataArray)
-
             appendComments(uniqueObjects);
-            console.log(data.page)
             paginationData = data.page;
             renderPagination(data.page)
         },
@@ -232,7 +254,6 @@ function loadComments() {
                 </li>
             `);
     }
-
 
     const filterUniqueById = (array) => {
         const seen = new Set();
@@ -386,10 +407,6 @@ function saveComment(id) {
         contentType: 'application/json',
         data: JSON.stringify(commentDto),
         success: function (data) {
-            // console.log(data)
-            // if (!data.parentCommentId) {
-            //     comments.push(data)
-            // }
             hideCommentSection()
             loadComments()
         }, error: function (error) {

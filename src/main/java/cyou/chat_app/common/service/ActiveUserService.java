@@ -1,4 +1,4 @@
-package cyou.chat_app.service;
+package cyou.chat_app.common.service;
 
 import lombok.Getter;
 import org.springframework.security.core.context.SecurityContextHolder;

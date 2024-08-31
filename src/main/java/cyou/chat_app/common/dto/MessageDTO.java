@@ -1,4 +1,4 @@
-package cyou.chat_app.dto;
+package cyou.chat_app.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,7 +1,7 @@
-package cyou.chat_app.controller;
+package cyou.chat_app.common.controller;
 
 
-import cyou.chat_app.dto.MessageDTO;
+import cyou.chat_app.common.dto.MessageDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;

@@ -135,7 +135,7 @@
             };
             stompClient.send("/app/chat.private." + choseUser, {}, JSON.stringify(message));
             $('#messageInput').val('');
-        }else {
+        } else {
             swal({
                 title: "Are you mad?",
                 text: "Please select user who is preferred to chat before send message !",
@@ -197,7 +197,123 @@
             }
         });
     });
+
+    // Save message to session storage
+    function saveMessageToSession(message) {
+        let messages = JSON.parse(sessionStorage.getItem('messages')) || [];
+        messages.push(message);
+        sessionStorage.setItem('messages', JSON.stringify(messages));
+    }
+
+    // Retrieve messages from session storage
+    function getMessagesFromSession() {
+        return JSON.parse(sessionStorage.getItem('messages')) || [];
+    }
+
+    // Clear messages from session storage
+    function clearMessagesFromSession() {
+        sessionStorage.removeItem('messages');
+    }
+
+
+    // Open a database
+    // const request = indexedDB.open('myDatabase', 1);
+
+    // request.onupgradeneeded = function (event) {
+    //     const db = event.target.result;
+    //     db.createObjectStore('myObjectStore', {keyPath: 'id'});
+    // };
+
+    // request.onsuccess = function (event) {
+    //     const db = event.target.result;
+    //
+    //     // Start a transaction to delete an object store
+    //     const transaction = db.transaction(['myObjectStore'], 'readwrite');
+    //     const objectStore = transaction.objectStore('myObjectStore');
+    //
+    //     objectStore.add({id: 1, name: 'John Doe'});
+    //     objectStore.add({id: 2, name: 'John Doe 1'});
+    //     objectStore.add({id: 3, name: 'John Doe 2'});
+    //     objectStore.add({id: 4, name: 'John Doe 3'});
+    //     objectStore.add({id: 5, name: 'John Doe 4'});
+    //
+    //     // Retrieve data from the object store
+    //     const getRequest = objectStore.get(1);
+    //     getRequest.onsuccess = function () {
+    //         console.log(getRequest.result);
+    //     };
+    //
+    // };
+
+    updateOrAddRecord(2,'Lalitj sdfdsffds')
+    function updateOrAddRecord(id, name) {
+        // Open a connection to the IndexedDB database
+        const request = indexedDB.open('myDatabase', 2);
+
+        request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            console.log(!db.objectStoreNames.contains('myObjectStore'))
+            // Create an object store with the name 'myObjectStore' if it doesn't exist
+            if (!db.objectStoreNames.contains('myObjectStore')) {
+                db.createObjectStore('myObjectStore', { keyPath: 'id' });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            const db = event.target.result;
+
+            // Start a transaction to access the object store
+            const transaction = db.transaction('myObjectStore', 'readwrite');
+            const objectStore = transaction.objectStore('myObjectStore');
+
+            // Define the record to be added or updated
+            const record = { id: id, name: name };
+
+            // Use the `put` method to add or update the record
+            const putRequest = objectStore.put(record);
+
+            const getRequest = objectStore.get(1);
+            getRequest.onsuccess = function() {
+                console.log(getRequest.result);
+            };
+
+            putRequest.onsuccess = function() {
+                console.log('Record added or updated successfully.');
+            };
+
+            putRequest.onerror = function() {
+                console.error('Error adding or updating record:', putRequest.error);
+            };
+
+            // Close the transaction when done
+            transaction.oncomplete = function() {
+                console.log('Transaction completed.');
+            };
+        };
+
+        request.onerror = function(event) {
+            console.error('Database error:', event.target.errorCode);
+        };
+    }
+
+
+    function deleteObjectStore(event) {
+        const db = event.target.result;
+
+        // Start a transaction to delete an object store
+        const transaction = db.transaction(['myObjectStore'], 'readwrite');
+        const objectStore = transaction.objectStore('myObjectStore');
+        // Delete all data from the object store
+        const clearRequest = objectStore.clear();
+
+        clearRequest.onsuccess = function () {
+            console.log('All data deleted from object store');
+        };
+    }
+
 </script>
+<!--todo: here is the plan need to user's session with this session login time then it was more than ten hours ago need to delete all messages in indexDb after checking the message store time-->
+
 
 </body>
 </html>

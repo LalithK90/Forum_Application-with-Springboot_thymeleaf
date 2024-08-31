@@ -1,9 +1,8 @@
-package cyou.chat_app.controller;
+package cyou.chat_app.common.controller;
 
 
-import cyou.chat_app.service.ActiveUserService;
+import cyou.chat_app.common.service.ActiveUserService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;

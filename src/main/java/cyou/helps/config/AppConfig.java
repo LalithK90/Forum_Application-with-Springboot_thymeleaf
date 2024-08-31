@@ -1,7 +1,6 @@
-package cyou.helps;
+package cyou.helps.config;
 
-import cyou.forum.comment.service.CommentService;
-import cyou.forum.comment.service.impl.CommentServiceImpl;
+import cyou.helps.CommonService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

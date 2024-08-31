@@ -1,4 +1,4 @@
-package cyou.helps;
+package cyou.helps.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;

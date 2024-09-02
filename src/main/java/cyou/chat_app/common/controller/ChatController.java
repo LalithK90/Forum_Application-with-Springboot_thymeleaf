@@ -2,6 +2,7 @@ package cyou.chat_app.common.controller;
 
 
 import cyou.chat_app.common.dto.MessageDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -10,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -20,6 +23,7 @@ import java.util.Base64;
 @AllArgsConstructor
 public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
+    private final HttpServletRequest request;
 
 
     @MessageMapping("/chat.private.{username}")
@@ -35,12 +39,15 @@ public class ChatController {
 
     @GetMapping("/chat")
     public String message(Model model) throws Exception {
-
-        final String secretKey = "N7MtcRGcI1HvPPf8zIstGtkoGEFeiMTeT2YRhK6qAn8=";
-        // Add the key to the model, which will be passed to the Thymeleaf template
-        model.addAttribute("secretKey", secretKey);
+        model.addAttribute("messageUrl", MvcUriComponentsBuilder.fromMethodName(ChatController.class, "secretKey").toUriString());
         model.addAttribute("currentUser", SecurityContextHolder.getContext().getAuthentication().getName());
         return "message/message";
+    }
+
+    @GetMapping("/chat/s")
+    @ResponseBody
+    private String secretKey() {
+        return "N7MtcRGcI1HvPPf8zIstGtkoGEFeiMTeT2YRhK6qAn8=";
     }
 
     private String generateSecretKey() throws NoSuchAlgorithmException {
